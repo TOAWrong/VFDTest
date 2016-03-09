@@ -1,0 +1,10 @@
+#folders
+/Debug
+/Release
+/VFDTest/Debug
+/VFDTest/Release
+/Hui
+
+#files
+.exe
+.obj
