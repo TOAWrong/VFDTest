@@ -1,0 +1,14 @@
+#folders
+/Debug
+/Release
+/VFDTest/Debug
+/VFDTest/Release
+/Hui/Debug
+/Hui/Release
+/.vs
+
+#files
+.exe
+.obj
+.pdb
+.sdf

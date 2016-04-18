@@ -1,0 +1,154 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="MainForm.cpp" />
+    <ClCompile Include="DlgOptions.cpp" />
+    <ClCompile Include="TimerThread.cpp" />
+    <ClCompile Include="VFDTest.cpp" />
+    <ClCompile Include="ImgView.cpp">
+      <Filter>PanImg</Filter>
+    </ClCompile>
+    <ClCompile Include="PanlImg.cpp">
+      <Filter>PanImg</Filter>
+    </ClCompile>
+    <ClCompile Include="DynamicScan.cpp">
+      <Filter>PanCtrl</Filter>
+    </ClCompile>
+    <ClCompile Include="PanlCtr.cpp">
+      <Filter>PanCtrl</Filter>
+    </ClCompile>
+    <ClCompile Include="ini.cpp">
+      <Filter>SelfDef</Filter>
+    </ClCompile>
+    <ClCompile Include="SerialPort.cpp">
+      <Filter>SelfDef</Filter>
+    </ClCompile>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="CtrlComm.cpp">
+      <Filter>SelfDef</Filter>
+    </ClCompile>
+    <ClCompile Include="methord.cpp">
+      <Filter>SelfDef</Filter>
+    </ClCompile>
+    <ClCompile Include="CtrlThread.cpp">
+      <Filter>Thread</Filter>
+    </ClCompile>
+    <ClCompile Include="MyThread.cpp">
+      <Filter>Thread</Filter>
+    </ClCompile>
+    <ClCompile Include="MeterThread.cpp">
+      <Filter>Thread</Filter>
+    </ClCompile>
+    <ClCompile Include="HWndEdit.cpp">
+      <Filter>Hui</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="MainForm.h" />
+    <ClInclude Include="DlgOptions.h" />
+    <ClInclude Include="TimerThread.h" />
+    <ClInclude Include="VFDTest.h" />
+    <ClInclude Include="ImgView.h">
+      <Filter>PanImg</Filter>
+    </ClInclude>
+    <ClInclude Include="PanlImg.h">
+      <Filter>PanImg</Filter>
+    </ClInclude>
+    <ClInclude Include="DynamicScan.h">
+      <Filter>PanCtrl</Filter>
+    </ClInclude>
+    <ClInclude Include="PanlCtr.h">
+      <Filter>PanCtrl</Filter>
+    </ClInclude>
+    <ClInclude Include="ini.h">
+      <Filter>SelfDef</Filter>
+    </ClInclude>
+    <ClInclude Include="SerialPort.h">
+      <Filter>SelfDef</Filter>
+    </ClInclude>
+    <ClInclude Include="stdafx.h">
+      <Filter>Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource.h">
+      <Filter>Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="CtrlComm.h">
+      <Filter>SelfDef</Filter>
+    </ClInclude>
+    <ClInclude Include="methord.h">
+      <Filter>SelfDef</Filter>
+    </ClInclude>
+    <ClInclude Include="CtrlThread.h">
+      <Filter>Thread</Filter>
+    </ClInclude>
+    <ClInclude Include="MyThread.h">
+      <Filter>Thread</Filter>
+    </ClInclude>
+    <ClInclude Include="MeterThread.h">
+      <Filter>Thread</Filter>
+    </ClInclude>
+    <ClInclude Include="Hui.h">
+      <Filter>Hui</Filter>
+    </ClInclude>
+    <ClInclude Include="HWndEdit.h">
+      <Filter>Hui</Filter>
+    </ClInclude>
+    <ClInclude Include="Common.h">
+      <Filter>SelfDef</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="res\btn69x57.png">
+      <Filter>Resource</Filter>
+    </None>
+    <None Include="res\VFDTest.rc2">
+      <Filter>Resource</Filter>
+    </None>
+    <None Include="ReadMe.txt">
+      <Filter>Resource</Filter>
+    </None>
+    <None Include="res\logo.png" />
+    <None Include="res\3.png">
+      <Filter>Resource</Filter>
+    </None>
+    <None Include="res\57.png">
+      <Filter>Resource</Filter>
+    </None>
+    <None Include="res\btn64X64.png">
+      <Filter>Resource</Filter>
+    </None>
+    <None Include="res\VFDTest.ico">
+      <Filter>Resource</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="PanCtrl">
+      <UniqueIdentifier>{d05dd7da-2f07-439b-a5c3-4640daa3b88d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="PanImg">
+      <UniqueIdentifier>{ffa5e024-4221-4be8-82de-ea546ad6d926}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource">
+      <UniqueIdentifier>{d5692aee-9898-4925-8cf2-5324d6a54d2c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SelfDef">
+      <UniqueIdentifier>{0cfcb0e8-4891-4259-bedb-2b127b2954f6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Thread">
+      <UniqueIdentifier>{7ab82ec8-61cc-47ae-b11d-186f1b507b67}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Hui">
+      <UniqueIdentifier>{e331ec96-52f4-4afb-b101-c0f0ce58ca67}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="VFDTest.rc">
+      <Filter>Resource</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+</Project>
