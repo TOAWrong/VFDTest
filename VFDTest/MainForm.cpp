@@ -285,7 +285,7 @@ void MainForm::OnOptions()
 */
 void MainForm::OnExit()
 {
-	//m_pCtrlThread.m_bFun = FALSE;
+	//m_pCtrlThread.Stop();
 	PostMessage(WM_CLOSE);
 }
 
@@ -294,7 +294,7 @@ void MainForm::OnClose()
 {
 	if( AfxMessageBox( _T("确定退出？"), MB_YESNO ) == IDNO )
 	{
-		//m_pCtrlThread.m_bFun = TRUE;
+		//m_pCtrlThread.Restart();
 		return;
 	}
 	KillTimer( 0 );
@@ -309,7 +309,7 @@ void MainForm::OnClose()
 		LogDisp( _T("退出写线程") );
 	}
 	
-	//m_pCtrlThread.End(); // 退出继电器线程
+	m_pCtrlThread.End(); // 退出继电器线程
 	LogDisp( _T("退出继电器线程") );
 
 	//::PostThreadMessage( m_pCtrlThread.m_Thread->m_nThreadID, WM_THREAD_SHUT, NULL, NULL );// 关闭所有工位
@@ -317,11 +317,11 @@ void MainForm::OnClose()
 	LogDisp( _T("关闭所有工位") );
 
 	//m_pCtrlThread.m_Port.StopMonitoring();
-	//m_pCtrlThread.m_Port.ClosePort();
+	m_pCtrlThread.m_Port.ClosePort();
 
 	for (int i = 0;i < m_iParts; i++)
 	{
-		//m_pMeterThread[i].m_Port.StopMonitoring();
+		m_pMeterThread[i].m_Port.StopMonitoring();
 		m_pMeterThread[i].m_Port.ClosePort();
 		m_pMeterThread[i].End(); // 退出数据采集线程
 		m_bOpenPort[m_iCom[i]] = FALSE;

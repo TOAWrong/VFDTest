@@ -16,6 +16,10 @@ CMyThread::CMyThread()
 
 CMyThread::~CMyThread()
 {
+	/*do
+	{
+		End();
+	} while ( m_bIsThread );*/
 	TRACE(_T("MyThread Ended!\r\n "));
 }
 
