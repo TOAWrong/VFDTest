@@ -98,6 +98,9 @@
     <ClInclude Include="HWndEdit.h">
       <Filter>Hui</Filter>
     </ClInclude>
+    <ClInclude Include="Common.h">
+      <Filter>SelfDef</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="res\btn69x57.png">

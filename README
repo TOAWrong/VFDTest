@@ -1,0 +1,8 @@
+2016/4/18
+    o 提交备份HUI.dll项目源文件
+    o 增加定义DATA_LENGTH_COMMUNICATION,取值为26时，只采集电压和电流；取值为66时，采集包括功率相关的参数
+
+2016/4/17
+    o CMyThread::End()增加发送线程停止消息，::PostThreadMessage( m_Thread->m_nThreadID, WM_THREAD_STOP, 0, 0 ),用来让线程退出消息循环
+    o 对于查询继电器工作状态的操作，由原来的扫描方式停止查询改为不管启动方式如何，都进行查询，但是在扫描启动的时候只具有关停工位的功能，
+不能启动工位

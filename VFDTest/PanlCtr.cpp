@@ -51,7 +51,7 @@ PanlCtr::PanlCtr(LPCRECT prc) : HCtrl(prc)
 		for( int j = 0; j < cols; j++ )
 		{
 			int x = j * 70 + y;
-			HBtn * btn = new HBtn(CRect(x, y, x + imgsize.cx, y + imgsize.cy), 0, 1, 2, ids[i*cols + j]);
+			HBtn * btn = new HBtn( CRect(x, y, x + imgsize.cx, y + imgsize.cy), 0, 1, 2, ids[i*cols + j]);
 			btn->setText( title[i*cols+j] );
 			btn->setFont( 18, 0, _T("¿¬Ìå") );
 			btn->setTextColor( 0xffffff );
@@ -69,7 +69,7 @@ PanlCtr::PanlCtr(LPCRECT prc) : HCtrl(prc)
 
 	// É¨ÃèÊäÈë¿ò
 	m_pScan = new HEdit( CRect());
-//	m_pScan->setAlign( DT_CENTER | DT_VCENTER );
+	//m_pScan->setAlign( DT_CENTER | DT_VCENTER );
 	m_pScan->setFont( 14, 0, 0 );
 	addCtrl(m_pScan);
 }

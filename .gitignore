@@ -3,8 +3,13 @@
 /Release
 /VFDTest/Debug
 /VFDTest/Release
-/Hui
+/Hui/Debug
+/Hui/Release
+/.vs
+/VFDTest/*.txt
 
 #files
 .exe
 .obj
+.pdb
+.sdf

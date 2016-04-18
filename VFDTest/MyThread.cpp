@@ -48,6 +48,7 @@ BOOL CMyThread::End()
 {
 	if( m_bIsThread )
 	{
+		::PostThreadMessage(m_Thread->m_nThreadID, WM_THREAD_STOP, 0, 0);
 		m_bExitThread = TRUE;
 		return TRUE;
 	}
@@ -84,8 +85,10 @@ UINT CMyThread::Thread(LPVOID lpParam)
 				DispatchMessage( &msg );
 			}
 		}
+
 		if ( pTrd->m_bFun )
 		{
+			TRACE(_T("我还在执行\r\n"));
 			pTrd->Fun();
 		}	
 	}

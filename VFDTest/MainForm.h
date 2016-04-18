@@ -98,7 +98,7 @@ public:
 
 	// 数据保存
 	void		WriteData();
-	void		SaveData(float vol,float cur,float tpq,float fre,float taw,float trw,int no,CString strID);// 将数据保存到数据库
+	void		SaveData(float vol,float cur, int no);// 将数据保存到数据库
 	void		SaveData(float vol,float cur,float tpq,float fre,float taw,float trw,int no);
 
 	// 数据状态指示

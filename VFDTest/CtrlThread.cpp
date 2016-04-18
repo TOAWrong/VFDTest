@@ -6,7 +6,7 @@
 
 CCtrlThread::CCtrlThread()
 {
-	//m_bFun = TRUE;
+	m_bFun = TRUE;
 }
 
 CCtrlThread::~CCtrlThread()

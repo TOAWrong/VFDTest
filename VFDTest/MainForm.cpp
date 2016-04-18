@@ -8,8 +8,8 @@
 #include "DlgOptions.h"
 #include <math.h>
 #include "CtrlComm.h"
+#include "Common.h"
 // MainForm
-
 IMPLEMENT_DYNAMIC(MainForm, HWnd)
 
 MainForm::MainForm()
@@ -650,7 +650,7 @@ LONG MainForm::OnCommunication(WPARAM ch, LPARAM port)
 		str.Format("%02x",ch);
 
 		m_strReceiveData[port] += str;*/
-		/*if ( m_strReceiveData[port] == 2 )
+		if ( m_strReceiveData[port] )
 		{
 			if ( m_strReceiveData[port].Left( 2 ) == _T("81") )
 			{
@@ -662,7 +662,7 @@ LONG MainForm::OnCommunication(WPARAM ch, LPARAM port)
 				CString strErr;
 				strErr.Format( _T("Error：0x82 控制继电器返回错误") );
 			}
-		}*/
+		}
 		if ( m_strReceiveData[port].GetLength() >= 4)
 		{
 			if (m_strReceiveData[port].Mid(2,2) != _T("01") && m_strReceiveData[port].Mid(2,2) != _T("05") )
@@ -733,34 +733,55 @@ LONG MainForm::OnCommunication(WPARAM ch, LPARAM port)
 				m_j++;
 			}
 		}
-		if ( m_strReceiveData[port].GetLength() == 26 )// 返回数据一个26个字
+		if ( m_strReceiveData[port].GetLength() == DATA_LENGTH_COMMUNICATION )// 返回数据一个26个字
 		{
-			//LogDisp( m_strReceiveData[port] );
-			CString strRecMidData = m_strReceiveData[port].Mid(0,22);
-			char buf[11];
-			methord::Str2Hex(strRecMidData,buf);
-			USHORT CRC = methord::MBCRC16((UCHAR *)buf,11);// 查表获得CRC校验码
-			int dataCrc=4096*methord::HexChar(m_strReceiveData[port][24])+256*methord::HexChar(m_strReceiveData[port][25])+16*methord::HexChar(m_strReceiveData[port][22])+methord::HexChar(m_strReceiveData[port][23]);// 计算接收到的CRC校验码
-		
-			if (CRC!=dataCrc)
+			int iNo = ComToPart(port);// 计算工位编号;
+			if (DATA_LENGTH_COMMUNICATION == 26)
 			{
-				LogDisp( _T("Error：仪表数据CRC校验出错") );
-				m_j++;
-				m_strReceiveData[port].Empty();
- 				return 0;
+				CString strRecMidData = m_strReceiveData[port].Mid(0, 22);
+				char buf[11];
+				methord::Str2Hex(strRecMidData, buf);
+				USHORT CRC = methord::MBCRC16((UCHAR *)buf, 11);// 查表获得CRC校验码
+				int dataCrc = 4096 * methord::HexChar(m_strReceiveData[port][24]) + 256 * methord::HexChar(m_strReceiveData[port][25]) + 16 * methord::HexChar(m_strReceiveData[port][22]) + methord::HexChar(m_strReceiveData[port][23]);// 计算接收到的CRC校验码
+
+				if (CRC != dataCrc)
+				{
+					LogDisp(_T("Error：仪表数据CRC校验出错"));
+					m_j++;
+					m_strReceiveData[port].Empty();
+					return 0;
+				}
+				m_i++;
+
+				//数值转换，将读取的仪表数据中包含的电参数提取出来
+				m_volVal[iNo] = methord::Hex2Float(m_strReceiveData[port].Mid(6, 8));
+				m_curVal[iNo] = methord::Hex2Float(m_strReceiveData[port].Mid(14, 8));
 			}
-			m_i++;
+			else
+			{
+				CString strRecMidData = m_strReceiveData[port].Mid(0, 62);
+				char buf[31];
+				methord::Str2Hex(strRecMidData, buf);
+				USHORT CRC = methord::MBCRC16((UCHAR *)buf, 31);// 查表获得CRC校验码
+				int dataCrc = 4096 * methord::HexChar(m_strReceiveData[port][64]) + 256 * methord::HexChar(m_strReceiveData[port][65]) + 16 * methord::HexChar(m_strReceiveData[port][62]) + methord::HexChar(m_strReceiveData[port][63]);// 计算接收到的CRC校验码
 
-			int iNo = ComToPart(port);// 计算工位编号
+				if (CRC != dataCrc)
+				{
+					LogDisp(_T("Error：仪表数据CRC校验出错"));
+					m_j++;
+					m_strReceiveData[port].Empty();
+					return 0;
+				}
+				m_i++;
 
-			//数值转换，将读取的仪表数据中包含的电参数提取出来
-			m_volVal[iNo] = methord::Hex2Float(m_strReceiveData[port].Mid(6,8));
-			m_curVal[iNo] = methord::Hex2Float(m_strReceiveData[port].Mid(14,8));
-			/*m_tawVal[iNo] = methord::Hex2Float(m_strReceiveData[port].Mid(22,8))*0.001;
-			m_trwVal[iNo] = methord::Hex2Float(m_strReceiveData[port].Mid(30,8))*0.001;
-			m_tpqVal[iNo] = methord::Hex2Float(m_strReceiveData[port].Mid(46,8));
-			m_freVal[iNo] = methord::Hex2Float(m_strReceiveData[port].Mid(54,8)); */
-
+				//数值转换，将读取的仪表数据中包含的电参数提取出来
+				m_volVal[iNo] = methord::Hex2Float(m_strReceiveData[port].Mid(6, 8));
+				m_curVal[iNo] = methord::Hex2Float(m_strReceiveData[port].Mid(14, 8));
+				m_tawVal[iNo] = methord::Hex2Float(m_strReceiveData[port].Mid(22,8))*0.001;
+				m_trwVal[iNo] = methord::Hex2Float(m_strReceiveData[port].Mid(30,8))*0.001;
+				m_tpqVal[iNo] = methord::Hex2Float(m_strReceiveData[port].Mid(46,8));
+				m_freVal[iNo] = methord::Hex2Float(m_strReceiveData[port].Mid(54,8)); 
+			}
 			m_strproductID = ArrayID[iNo];// 变频板编号 = 编号数组[仪表编号]
 
 			if(m_bStartWork[iNo])
@@ -816,7 +837,7 @@ LONG MainForm::OnCommunication(WPARAM ch, LPARAM port)
 						strEnd.Format(_T("产品号：%i,工位号：%i，已运行时间：%i秒，启动不成功，测试不合格"),ArrayID[iNo],iNo,ts.GetTotalSeconds());
 						CStdioFile SFile;
 						CFileException fileException;
-						if(SFile.Open(_T("测试结果.txt"),CFile::modeCreate|CFile::modeNoTruncate|CFile::modeWrite),&fileException)
+						if(SFile.Open(_T("test.txt"),CFile::modeCreate|CFile::modeNoTruncate|CFile::modeWrite),&fileException)
 						{
 							SFile.SeekToEnd();// 先定位到文件尾部
 							SFile.WriteString(strEnd);// 写入文件
@@ -904,18 +925,18 @@ void MainForm::SaveData(float vol,float cur,float tpq,float fre,float taw,float 
 {
 	CString str,strID,strDate,strTime,strDateTime;
 	SYSTEMTIME st;
-	GetLocalTime(&st); 
+	GetLocalTime( &st ); 
 	strID = ArrayID[addr];
-	strDate.Format("%04d%02d%02d",st.wYear,st.wMonth,st.wDay);
-	strTime.Format("%02d:%02d:%02d.%03d",st.wHour,st.wMinute,st.wSecond,st.wMilliseconds) ;
-	strDateTime.Format("%02d/%02d/%02d %02d:%02d:%02d.%03d",st.wYear,st.wMonth,st.wDay,st.wHour,st.wMinute,st.wSecond,st.wMilliseconds);
+	strDate.Format( "%04d%02d%02d", st.wYear, st.wMonth, st.wDay );
+	strTime.Format( "%02d:%02d:%02d.%03d", st.wHour, st.wMinute, st.wSecond, st.wMilliseconds ) ;
+	strDateTime.Format("%02d/%02d/%02d %02d:%02d:%02d.%03d", st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
 	if ( m_iStartMethod == 1 )// 扫描启动方式，保存数据包含产品序列号
 	{
-		str.Format(_T("%s	%04d	%s	%0.4f	%0.1f\r\n"), strDateTime, addr, strID, cur, vol/*, fre*/);
+		str.Format(_T("%s	%04d	%s	%0.4f	%0.1f	%0.4f	%0.4f	%0.4f\r\n"), strDateTime, addr, strID, vol, cur, tpq, taw, trw );
 	}
 	else// 按钮启动方式，保存数据不包含产品序列号
 	{
-		str.Format(_T("%s	%04d	%0.4f	%0.1f\r\n"), strDateTime, addr, cur, vol/*, fre*/);
+		str.Format(_T("%s	%04d	%0.4f	%0.1f	%0.4f	%0.4f	%0.4f\r\n"), strDateTime, addr, cur, vol, tpq, taw, trw );
 	}
 	CStdioFile SFile;
 	CFileException fileException;
@@ -932,13 +953,15 @@ void MainForm::SaveData(float vol,float cur,float tpq,float fre,float taw,float 
 /*
 数据存储,写入TXT文档
 */
-void MainForm::SaveData(float vol,float cur,float tpq,float fre,float taw,float trw,int addr,CString strID)
+void MainForm::SaveData( float vol, float cur, int addr)
 {
-	CString str,strDate,strTime;
+	CString str, strID, strDate, strTime, strDateTime;
 	SYSTEMTIME st;
-	GetLocalTime(&st); 
-	strDate.Format("%04d%02d%02d",st.wYear,st.wMonth,st.wDay);
-	strTime.Format("%02d:%02d:%02d.%03d",st.wHour,st.wMinute,st.wSecond,st.wMilliseconds) ;
+	GetLocalTime(&st);
+	strID = ArrayID[addr];
+	strDate.Format("%04d%02d%02d", st.wYear, st.wMonth, st.wDay);
+	strTime.Format("%02d:%02d:%02d.%03d", st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
+	strDateTime.Format("%02d/%02d/%02d %02d:%02d:%02d.%03d", st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
 	if ( m_iStartMethod == 1 )// 扫描启动方式，保存数据包含产品序列号
 	{
 		str.Format(_T("%s %s	%04d	%s	%0.4f	%0.1f\r\n"), strDate, strTime, addr, strID, cur, vol/*, fre*/);
@@ -1109,14 +1132,21 @@ void MainForm::OnDisp(int iMeter,int m_nCom)
 
 	m_strcNo.Format(_T("%i"),iMeter);
 	m_strvolVal.Format(_T("%0.1f"),m_volVal[iMeter]);
-	m_strcurVal.Format(_T("%0.3f"),m_curVal[iMeter]); 
-	//m_strfreVal.Format(_T("%0.2f"),m_freVal[iMeter]);
-
+	m_strcurVal.Format(_T("%0.3f"),m_curVal[iMeter]);
+	if (DATA_LENGTH_COMMUNICATION == 66)
+	{
+		m_strfreVal.Format(_T("%0.2f"), m_freVal[iMeter]);
+		m_strtrwVal.Format(_T("%0.4f"), m_trwVal[iMeter]);
+		m_strtawVal.Format(_T("%0.4f"), m_tawVal[iMeter]);
+		m_strtpqVal.Format(_T("%0.4f"), m_tpqVal[iMeter]);
+	}
+	
 	CString str;
-	str.Format(_T("电流%s已运行%s"),m_strcurVal,m_sysTime);
+	str.Format(_T( "电流%s已运行%s" ),m_strcurVal,m_sysTime);
+	str.Format(_T("电压:%s 功率:%s\n电流:%s 功因:%s"), m_strvolVal, m_strtawVal, m_strcurVal, m_strtpqVal);
 	m_pPanlImg->m_iv[iMeter]->m_pText->setText( m_strcurVal );
 	m_pPanlImg->m_iv[iMeter]->m_pTime->setText( m_sysTime );
-
+	
 //	LogDisp(str);
 
 	if ( ts.GetTotalMinutes() >= m_iTotalTime )// 测试时间到，执行相应的合格操作
@@ -1136,14 +1166,14 @@ void MainForm::OnDisp(int iMeter,int m_nCom)
 		strEnd.Format( _T("产品号：%i,工位号：TYLH%04i，已运行时间：%i分，测试合格\r\n"), ArrayID[iMeter], iMeter, ts.GetTotalMinutes() );
 		CStdioFile SFile;
 		CFileException fileException;
-		if(SFile.Open(_T("测试结果.txt"),CFile::modeCreate|CFile::modeNoTruncate|CFile::modeWrite),&fileException)
+		if(SFile.Open(_T("test.txt"),CFile::modeCreate|CFile::modeNoTruncate|CFile::modeWrite),&fileException)
 		{
 			SFile.SeekToEnd();// 先定位到文件尾部
 			SFile.WriteString( strEnd );// 写入文件
 		}
 		else
 		{
-			TRACE("Can't open file %s,error=%u\n",_T("测试结果.txt"),fileException.m_cause);
+			TRACE("Can't open file %s,error=%u\n",_T("test.txt"),fileException.m_cause);
 		}
 
 	}
@@ -1227,10 +1257,19 @@ void MainForm::WriteData()
 //	int iNos = m_iParts * m_iPartNumbers;
 	for ( int i = m_iNoBegin; i < m_iNoEnd; i++ )
 	{
-		if ( m_bStartWork[i] )
+		if ( m_bStartWork[i])
 		{
-			if (m_bRunning[i])// 工位正常启动才记录数据
-				SaveData( m_volVal[i], m_curVal[i], m_tpqVal[i], m_freVal[i], m_tawVal[i], m_trwVal[i], i );
+			if ( m_bRunning[i])// 工位正常启动才记录数据
+			{
+				if ( DATA_LENGTH_COMMUNICATION == 66 )
+				{
+					SaveData( m_volVal[i], m_curVal[i], m_tpqVal[i], m_freVal[i], m_tawVal[i], m_trwVal[i], i);
+				}
+				else if( DATA_LENGTH_COMMUNICATION == 26 )
+				{
+					SaveData( m_volVal[i], m_curVal[i], i);
+				}
+			}
 		}
 	}
 }
