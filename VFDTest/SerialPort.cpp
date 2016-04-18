@@ -914,6 +914,7 @@ void CSerialPort::ReceiveString(CSerialPort* port, COMSTAT comstat)
 		{
 			::SendMessage(port->m_pOwner, WM_COMM_RECEIVE_STRING, (WPARAM)strData.AllocSysString(), (LPARAM)port->m_nPortNr);
 		}
+		delete readBuff;
 	} // end forever loop
 }
 

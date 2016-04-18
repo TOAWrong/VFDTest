@@ -285,7 +285,7 @@ void MainForm::OnOptions()
 */
 void MainForm::OnExit()
 {
-	m_pCtrlThread.m_bFun = FALSE;
+	//m_pCtrlThread.m_bFun = FALSE;
 	PostMessage(WM_CLOSE);
 }
 
@@ -294,7 +294,7 @@ void MainForm::OnClose()
 {
 	if( AfxMessageBox( _T("确定退出？"), MB_YESNO ) == IDNO )
 	{
-		m_pCtrlThread.m_bFun = TRUE;
+		//m_pCtrlThread.m_bFun = TRUE;
 		return;
 	}
 	KillTimer( 0 );
@@ -309,7 +309,7 @@ void MainForm::OnClose()
 		LogDisp( _T("退出写线程") );
 	}
 	
-	m_pCtrlThread.End(); // 退出继电器线程
+	//m_pCtrlThread.End(); // 退出继电器线程
 	LogDisp( _T("退出继电器线程") );
 
 	//::PostThreadMessage( m_pCtrlThread.m_Thread->m_nThreadID, WM_THREAD_SHUT, NULL, NULL );// 关闭所有工位
@@ -317,7 +317,7 @@ void MainForm::OnClose()
 	LogDisp( _T("关闭所有工位") );
 
 	//m_pCtrlThread.m_Port.StopMonitoring();
-	m_pCtrlThread.m_Port.ClosePort();
+	//m_pCtrlThread.m_Port.ClosePort();
 
 	for (int i = 0;i < m_iParts; i++)
 	{
@@ -587,7 +587,7 @@ BOOL MainForm::SetTimerEvent(int port)
 
 	if ( !bStartWork )
 	{
-		m_pMeterThread[port].End();
+		//m_pMeterThread[port].End();
 		m_bTimer[port] = FALSE;// 定时器关闭
 		LogDisp(_T("关闭定时器，退出循环")); 
 		iExit = 0;
@@ -598,10 +598,10 @@ BOOL MainForm::SetTimerEvent(int port)
 			m_iTestEnd[i] = 0;// 工位启动延迟计数清零
 			m_bTestEnd[i] = FALSE;
 		}
-		if(m_bIsWriteThread)// 退出写线程
-		{
-			::PostThreadMessage( m_Thread->m_nThreadID, WM_THREAD_STOP, 0, 0 );
-		}
+		//if(m_bIsWriteThread)// 退出写线程
+		//{
+		//	::PostThreadMessage( m_Thread->m_nThreadID, WM_THREAD_STOP, 0, 0 );
+		//}
 		return FALSE;
 	}
 	
@@ -632,18 +632,6 @@ LONG MainForm::OnCommunication(WPARAM ch, LPARAM port)
 	//	str.Format("%c",ch);
 	m_strReceiveData[port] += str;
 
-	//CString strLog;
-	//strLog = m_strReceiveData[port] + _T("\r\n");
-	//strLog.Format(_T("%d::%s"),port,m_strReceiveData[port]);
-	//CStdioFile SFile;
-	//CFileException fileException;
-	//if(SFile.Open( _T("ReceiveData.txt"), CFile::modeCreate | CFile::modeNoTruncate | CFile::modeWrite ), &fileException )
-	//{
-	//	SFile.SeekToEnd();// 先定位到文件尾部
-	//	SFile.WriteString( strLog );// 写入文件
-	//}
-
-	//LogDisp(m_strReceiveData[port]);
 	if ( port == m_iCtrlCom )// 继电器控制板消息处理，主要判断继电器状态
 	{
 		/*CString str = "";
@@ -681,16 +669,13 @@ LONG MainForm::OnCommunication(WPARAM ch, LPARAM port)
 				char buf[5];
 				methord::Str2Hex( strRecMidData, buf );
 				USHORT CRC = methord::MBCRC16( (UCHAR *)buf, 5 );// 查表获得CRC校验码
-				int dataCrc=4096*methord::HexChar( m_strReceiveData[port][12])+256*methord::HexChar(m_strReceiveData[port][13])+16*methord::HexChar(m_strReceiveData[port][10])+methord::HexChar(m_strReceiveData[port][11]);// 计算接收到的CRC校验码
+				int dataCrc=4096*methord::HexChar( m_strReceiveData[port][12])+256*methord::HexChar(m_strReceiveData[port][13])+
+					16*methord::HexChar(m_strReceiveData[port][10])+methord::HexChar(m_strReceiveData[port][11]);// 计算接收到的CRC校验码
 
 				if (CRC!=dataCrc)
 				{
 					return 0;
 				}
-
-				/*CString strRec;
-				strRec.Format( _T("接收：%s"),m_strReceiveData[port] );
-				LogDisp( strRec );*/
 
 				int iAddr = methord::Hex2Dec( m_strReceiveData[port].Left( 2 ) );
 
@@ -718,18 +703,9 @@ LONG MainForm::OnCommunication(WPARAM ch, LPARAM port)
 		//LogDisp(m_strReceiveData[port]);
  		if ( m_strReceiveData[port].GetLength() == 4 )
  		{
- 			/*if (m_strReceiveData[port].Mid(2,2)=="FF"||m_strReceiveData[port].Mid(2,2)=="ff")
- 			{
-				m_strReceiveData[port].Empty();
-				str.Format(_T("数据接收错误,已接收%i个数据,错误%i次,断线%i次"),m_i,m_j,m_l);
-				LogDisp( str );
-				m_j++;
- 			}*/
 			if (m_strReceiveData[port].Mid( 2, 2 ) != _T("03"))// 数据第2个字为03   表明返回的是查询结果
 			{
 				m_strReceiveData[port].Empty();
-				/*str2.Format(_T("Error：仪表数据错误,已接收%i个数据,错误%i次,断线%i次"),m_i,m_j,m_l);
-				LogDisp( str2 );*/
 				m_j++;
 			}
 		}
@@ -794,17 +770,23 @@ LONG MainForm::OnCommunication(WPARAM ch, LPARAM port)
 						CTime systemp = CTime::GetCurrentTime(); 
 						CTimeSpan ts = systemp - m_startTime[iNo];// 计算已运行时间
 						CString strStart;
-						strStart.Format(_T("产品号：%i,工位号：%i，启动耗时：%i秒\r\n"),ArrayID[iNo],iNo,ts.GetTotalSeconds());
+						CString str;
+						str = TimeToStr( iNo );
+						strStart.Format(_T("%s，启动耗时：%i秒\r\n"),str ,ts.GetTotalSeconds());
 						CStdioFile SFile;
 						CFileException fileException;
-						if(SFile.Open(_T("启动时间.txt"),CFile::modeCreate|CFile::modeNoTruncate|CFile::modeWrite),&fileException)
+
+						CString strTextPath;
+						strTextPath.Format(_T("%s//test.txt"), theApp.m_szAppPath);
+
+						if(SFile.Open( strTextPath, CFile::modeCreate|CFile::modeNoTruncate|CFile::modeWrite), &fileException )
 						{
 							SFile.SeekToEnd();// 先定位到文件尾部
 							SFile.WriteString(strStart);// 写入文件
 						}
 						else
 						{
-							TRACE("Can't open file %s,error=%u\n",_T("启动时间.txt"),fileException.m_cause);
+							TRACE("Can't open file %s,error=%u\n",_T("test.txt"),fileException.m_cause);
 						}
 					}
 					m_bRunning[iNo] = TRUE;// 电流大于0.1，工位已正常启动
@@ -834,17 +816,24 @@ LONG MainForm::OnCommunication(WPARAM ch, LPARAM port)
 						::PostThreadMessage( m_pCtrlThread.m_Thread->m_nThreadID, WM_THREAD_MSG, 1, iNo );
 
 						CString strEnd;
-						strEnd.Format(_T("产品号：%i,工位号：%i，已运行时间：%i秒，启动不成功，测试不合格"),ArrayID[iNo],iNo,ts.GetTotalSeconds());
+						CString str;
+						str = TimeToStr(iNo);
+						strEnd.Format(_T("%s，已运行时间：%i秒，启动不成功，测试不合格"), str, ts.GetTotalSeconds());
+
 						CStdioFile SFile;
 						CFileException fileException;
-						if(SFile.Open(_T("test.txt"),CFile::modeCreate|CFile::modeNoTruncate|CFile::modeWrite),&fileException)
+
+						CString strTextPath;
+						strTextPath.Format( _T("%s//test.txt"), theApp.m_szAppPath );
+
+						if(SFile.Open( strTextPath, CFile::modeCreate|CFile::modeNoTruncate|CFile::modeWrite),&fileException)
 						{
 							SFile.SeekToEnd();// 先定位到文件尾部
 							SFile.WriteString(strEnd);// 写入文件
 						}
 						else
 						{
-							TRACE("Can't open file %s,error=%u\n",_T("测试结果.txt"),fileException.m_cause);
+							TRACE("Can't open file %s,error=%u\n",_T("test.txt"),fileException.m_cause);
 						}
 					}
 				}
@@ -890,9 +879,9 @@ void MainForm::CtrlStatus( int iStatus, int iAddr, BOOL bLow )
 				CTime sys = CTime::GetCurrentTime();
 				m_startTime[iNo + i] = sys;// 记录工位启动时间
 				m_bStartWork[iNo +i] = TRUE;// 继电器状态为1，对应工位开启，标志置为1
-				if ( !m_bTimer[ m_iCom[0] ] )// 如果对应端口定时器未启动，则开启定时器
+				if ( !m_bTimer[ m_iCom[iPartNo] ] )// 如果对应端口定时器未启动，则开启定时器
 				{
-					BeginToRun(iNo + i);
+					BeginToRun(iNo + i);// 启动对应工位，iNo + i为工位号
 				}
 			}
 			if ( m_bTestEnd[iNo + i] )
@@ -940,14 +929,16 @@ void MainForm::SaveData(float vol,float cur,float tpq,float fre,float taw,float 
 	}
 	CStdioFile SFile;
 	CFileException fileException;
-	if(SFile.Open(_T("DATA.txt"),CFile::modeCreate|CFile::modeNoTruncate|CFile::modeWrite),&fileException)
+	CString strTextPath;
+	strTextPath.Format(_T("%s//data.txt"), theApp.m_szAppPath);
+	if(SFile.Open( strTextPath, CFile::modeCreate|CFile::modeNoTruncate|CFile::modeWrite), &fileException )
 	{
 		SFile.SeekToEnd();// 先定位到文件尾部
 		SFile.WriteString(str);// 写入文件
 	}
 	else
 	{
-		TRACE("Can't open file %s,error=%u\n",_T("DATA.txt"),fileException.m_cause);
+		TRACE("Can't open file %s,error=%u\n",_T("data.txt"),fileException.m_cause);
 	}
 }
 /*
@@ -972,14 +963,18 @@ void MainForm::SaveData( float vol, float cur, int addr)
 	}
 	CStdioFile SFile;
 	CFileException fileException;
-	if(SFile.Open(_T("DATA.txt"),CFile::modeCreate|CFile::modeNoTruncate|CFile::modeWrite),&fileException)
+
+	CString strTextPath;
+	strTextPath.Format(_T("%s//data.txt"), theApp.m_szAppPath);
+
+	if(SFile.Open( strTextPath, CFile::modeCreate|CFile::modeNoTruncate|CFile::modeWrite), &fileException )
 	{
 		SFile.SeekToEnd();// 先定位到文件尾部
 		SFile.WriteString(str);// 写入文件
 	}
 	else
 	{
-		TRACE("Can't open file %s,error=%u\n",_T("DATA.txt"),fileException.m_cause);
+		TRACE("Can't open file %s,error=%u\n",_T("data.txt"),fileException.m_cause);
 	}
 
 }
@@ -991,12 +986,7 @@ void MainForm::BeginToRun(int No)
 {
 	
 	int port = PartToCOM(No);// 串口号
-	int addrTemp = No%m_iPartNumbers;
-	if (addrTemp == 0)
-	{
-		addrTemp = m_iPartNumbers;
-	}
-	m_addr[port] = addrTemp;
+	m_addr[port] = (No % m_iPartNumbers) == 0 ? m_iPartNumbers : No % m_iPartNumbers;
 	if(m_bOpenPort[port])
 	{
 		if(m_bStart[port])
@@ -1007,7 +997,7 @@ void MainForm::BeginToRun(int No)
 			SetTimer( port, m_iComTime, NULL );
 			m_bTimer[port] = TRUE;
 			CString str;
-			str.Format( _T("开启定时器") );
+			str.Format( _T("开启定时器%d"),port );
 			LogDisp( str );
 		}
 	}
@@ -1109,7 +1099,7 @@ void MainForm::CloseComm()
 		if (m_bOpenPort[m_iCom[i]])
 		{
 			m_pMeterThread[m_iCom[i]].m_Port.ClosePort();// 关闭对应串口;
-			m_bOpenPort[m_iCom[i]] = FALSE;
+			/*m_bOpenPort[m_iCom[i]] = FALSE;*/
 			strCom.Format( _T("COM%d "),m_iCom[i]);
 			str += strCom;
 		}
@@ -1117,7 +1107,7 @@ void MainForm::CloseComm()
 	if ( m_bOpenPort[m_iCtrlCom] )
 	{
 		m_pCtrlThread.m_Port.ClosePort();
-		m_bOpenPort[m_iCtrlCom] = FALSE;
+		//m_bOpenPort[m_iCtrlCom] = FALSE;
 		strCom.Format( _T("COM%d"),m_iCtrlCom );
 		str += strCom;
 	}
@@ -1160,13 +1150,17 @@ void MainForm::OnDisp(int iMeter,int m_nCom)
 		OnStatus(iMeter);
 		str.Format( _T("工位%i测试时间到"), iMeter );
 		LogDisp( str );
-		m_bStartWork[iMeter] = FALSE;
-		m_bRunning[iMeter] = FALSE;
+		//m_bStartWork[iMeter] = FALSE;
+		//m_bRunning[iMeter] = FALSE;
 		CString strEnd;
-		strEnd.Format( _T("产品号：%i,工位号：TYLH%04i，已运行时间：%i分，测试合格\r\n"), ArrayID[iMeter], iMeter, ts.GetTotalMinutes() );
+		CString str;
+		str = TimeToStr(iMeter);
+		strEnd.Format(_T("%s，运行时间：%i分，测试合格\r\n"), str, ts.GetTotalMinutes());
 		CStdioFile SFile;
 		CFileException fileException;
-		if(SFile.Open(_T("test.txt"),CFile::modeCreate|CFile::modeNoTruncate|CFile::modeWrite),&fileException)
+		CString strTextPath;
+		strTextPath.Format(_T("%s//test.txt"), theApp.m_szAppPath );
+		if(SFile.Open( strTextPath, CFile::modeCreate|CFile::modeNoTruncate|CFile::modeWrite), &fileException )
 		{
 			SFile.SeekToEnd();// 先定位到文件尾部
 			SFile.WriteString( strEnd );// 写入文件
@@ -1490,4 +1484,24 @@ void MainForm::OnTimer(UINT_PTR nIDEvent)
 	SetTimerEvent(nIDEvent);
 
 	HWnd::OnTimer(nIDEvent);
+}
+
+CString MainForm::TimeToStr(int iNo)
+{
+	CString strID;
+	if (m_iStartMethod == 1)
+	{
+		strID.Format(_T(" 产品号:%s,工位号:%i"), ArrayID[iNo], iNo);
+	}
+	else
+	{
+		strID.Format(_T(" 工位号:%i"), iNo);
+	}
+
+	CString strTime;
+	SYSTEMTIME st;
+	GetLocalTime(&st);
+	strTime.Format("%02d/%02d/%02d %02d:%02d:%02d.%03d", st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
+
+	return strTime + strID;
 }

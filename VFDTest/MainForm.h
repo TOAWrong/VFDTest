@@ -189,7 +189,7 @@ public:
 // Methods
 private:
 	void			imgJoin( int * pData );	// 拼接数据
-
+	CString			TimeToStr( int iNo );//获取时间
 	// 数据保存线程
 	CWinThread*		m_Thread;
 	BOOL			m_bAutoDelete;
