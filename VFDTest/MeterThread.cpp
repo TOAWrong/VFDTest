@@ -10,8 +10,13 @@ CMeterThread::CMeterThread()
 	m_fnCode = 3;// 查询命令代码
 	m_readAddrCode = 22;// 查询首地址
 	if (DATA_LENGTH_COMMUNICATION == 66)
+	{
 		m_lenCode = 14;
-	m_lenCode = 4;  // 查询寄存器个数
+	}
+	else
+	{
+		m_lenCode = 4;  // 查询寄存器个数
+	}
 }
 
 CMeterThread::~CMeterThread()

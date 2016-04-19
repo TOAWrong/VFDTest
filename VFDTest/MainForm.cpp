@@ -700,7 +700,7 @@ LONG MainForm::OnCommunication(WPARAM ch, LPARAM port)
 	}
 	else
 	{
-		//LogDisp(m_strReceiveData[port]);
+		
  		if ( m_strReceiveData[port].GetLength() == 4 )
  		{
 			if (m_strReceiveData[port].Mid( 2, 2 ) != _T("03"))// 数据第2个字为03   表明返回的是查询结果
@@ -711,6 +711,7 @@ LONG MainForm::OnCommunication(WPARAM ch, LPARAM port)
 		}
 		if ( m_strReceiveData[port].GetLength() == DATA_LENGTH_COMMUNICATION )// 返回数据一个26个字
 		{
+			TRACE(m_strReceiveData[port]);
 			int iNo = ComToPart(port);// 计算工位编号;
 			if (DATA_LENGTH_COMMUNICATION == 26)
 			{
@@ -763,7 +764,7 @@ LONG MainForm::OnCommunication(WPARAM ch, LPARAM port)
 			if(m_bStartWork[iNo])
 			{
 				m_communicationSign[port]=TRUE;
-				if (m_curVal[iNo] >= 0.1)//电流大于0.1A表明已启动成功
+				if (m_curVal[iNo] >= 0.3)//电流大于0.3A表明已启动成功
 				{
 					if (!m_bRunning[iNo])// 记录启动时间
 					{
@@ -818,7 +819,7 @@ LONG MainForm::OnCommunication(WPARAM ch, LPARAM port)
 						CString strEnd;
 						CString str;
 						str = TimeToStr(iNo);
-						strEnd.Format(_T("%s，已运行时间：%i秒，启动不成功，测试不合格"), str, ts.GetTotalSeconds());
+						strEnd.Format(_T("%s，已运行时间：%i秒，启动不成功，测试不合格\r\n"), str, ts.GetTotalSeconds());
 
 						CStdioFile SFile;
 						CFileException fileException;
@@ -900,6 +901,8 @@ void MainForm::CtrlStatus( int iStatus, int iAddr, BOOL bLow )
 			{
 				m_bStartWork[iNo + i] = FALSE;// 继电器状态为0，对应工位断开，标志置为0
 				::PostThreadMessageA( m_pCtrlThread.m_Thread->m_nThreadID, WM_THREAD_MSG, 1, iNo+i);// 不合格指示
+				m_pPanlImg->m_iv[iNo + i]->setText(_T("Closed"));
+				m_pPanlImg->m_iv[iNo + i]->setTextColor( 0x0000ff );
 				LogDisp( _T("工位断开，测试不合格") );
 			}
 		}
@@ -1146,7 +1149,7 @@ void MainForm::OnDisp(int iMeter,int m_nCom)
 
 		m_bTestEnd[iMeter] = TRUE;
 
-		m_pPanlImg->m_iv[iMeter]->m_pPrompt->setText( _T( "测试合格" ) );
+		m_pPanlImg->m_iv[iMeter]->m_pPrompt->setText( _T( "PASS" ) );
 		OnStatus(iMeter);
 		str.Format( _T("工位%i测试时间到"), iMeter );
 		LogDisp( str );
@@ -1205,14 +1208,14 @@ void MainForm::OnStatus( int addr )
 void MainForm::OnStatusRunning( int addr )// 正常运行状态指示
 {
 	m_pPanlImg->m_iv[addr]->m_pText->setTextColor( 0x00ff00 );// 中间电流设为绿色
-	m_pPanlImg->m_iv[addr]->m_pPrompt->setText( _T("运行") );
+	m_pPanlImg->m_iv[addr]->m_pPrompt->setText( _T("Running") );
 	m_pPanlImg->m_iv[addr]->m_pPrompt->setTextColor( 0x000000 );// 左上提示设为黑色
 //	Invalidate(TRUE);
 }
 void MainForm::OnStatusDisconnect( int addr )
 {
 	m_pPanlImg->m_iv[addr]->m_pText->setTextColor( 0x0000ff );// 中间电流设为红色
-	m_pPanlImg->m_iv[addr]->m_pPrompt->setText( _T("断线") );
+	m_pPanlImg->m_iv[addr]->m_pPrompt->setText( _T("Disconnected") );
 	Invalidate(TRUE);
 }
 /*
