@@ -92,7 +92,7 @@ UINT CMyThread::Thread(LPVOID lpParam)
 
 		if ( pTrd->m_bFun )
 		{
-			TRACE(_T("我还在执行\r\n"));
+			//TRACE(_T("我还在执行\r\n"));
 			pTrd->Fun();
 		}	
 	}

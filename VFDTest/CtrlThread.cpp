@@ -16,7 +16,7 @@ CCtrlThread::~CCtrlThread()
 
 void CCtrlThread::RunMsg()
 {
- 	//m_csForVec.Lock();
+ 	m_csForVec.Lock();
  	switch( m_iStatus )
  	{
 	case 0: // 全关
@@ -24,15 +24,19 @@ void CCtrlThread::RunMsg()
 		TRACE(_T("close all\r\n"));
 		Sleep( 60 );
 		break;
- 	case 1: // 全关-Red开
-		m_Port.SendCtrlOrder( CTRL_ORDER_CLOSE, 254, m_iNo );
-		Sleep( 60 );
+ 	case 1: // 全关-Red开--160420改为BLUE关-RED开
+		m_Port.SendCtrlOrder(CTRL_ORDER_CLOSE, 254, m_iNo);
+		Sleep(60);
+		/*m_Port.SendCtrlOrder(CTRL_ORDER_CLOSE, LED_BLUE, m_iNo);
+		Sleep( 60 );*/
 		m_Port.SendCtrlOrder( CTRL_ORDER_OPEN, LED_RED, m_iNo);
 		Sleep( 60 );
 		break;
- 	case 2: // 全关-Green开
-		m_Port.SendCtrlOrder( CTRL_ORDER_CLOSE, 254, m_iNo );
-		Sleep( 60 );
+ 	case 2: // 全关-Green开--160420改为BLUE关-GREEN开
+		m_Port.SendCtrlOrder(CTRL_ORDER_CLOSE, 254, m_iNo);
+		Sleep(60);
+		/*m_Port.SendCtrlOrder(CTRL_ORDER_CLOSE, LED_BLUE, m_iNo);
+		Sleep(60);*/
 		m_Port.SendCtrlOrder( CTRL_ORDER_OPEN, LED_GREEN, m_iNo );
 		Sleep( 60 );
 		break;
@@ -54,7 +58,7 @@ void CCtrlThread::RunMsg()
 	default:
 		break;
  	}
- 	//m_csForVec.Unlock();
+ 	m_csForVec.Unlock();
 }
 
 void CCtrlThread::Fun()
