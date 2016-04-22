@@ -13,5 +13,6 @@
 #define  CTRL_ORDER_CLOSE 0		// 继电器断开指令，即关闭对应指示灯
 
 #define	 DATA_LENGTH_COMMUNICATION	26	//取值为26或者66； 26——只采集电压电流数值、66——采集包括功率相关数值在内的所有数据
+#define  CTRL_DELAY 60
 
 #endif

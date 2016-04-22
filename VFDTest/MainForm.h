@@ -55,7 +55,7 @@ public:
 	BOOL		m_bStartWork[1000];// 仪表工位启动标志
 	BOOL		m_bRunning[1000];// 仪表工位正常运行标志
 	int			m_offtimes[1000];// 断线重连次数
-	BOOL		m_bTestEnd[1000];// 工位是否测试结束，防止接收数据延迟造成误判
+	BOOL		m_bTestEnding[1000];// 工位是否测试结束，防止接收数据延迟造成误判
 	BOOL		m_bPass[1000];// 工位合格标志
 	int			m_iTestEnd[1000];
 
@@ -104,10 +104,11 @@ public:
 	// 数据状态指示
 	void		OnDisp(int iMeter,int m_nCom);// 更改列表视图中仪表编号为no的行
 	void		StartNewTest(int iMeter);// 开始新一轮测试
-	void		OnStatus(int i);// 实时显示对应工位的状态
-	void		OnStatusRunning(int addr);// 设置对应工位状态为工作中
-	void		OnStatusDisconnect(int addr);// 设置对应工位状态为不合格
-	void		OnStatusDone(int addr);// 设置对应工位状态为合格
+	void		SetColorPass(int i);// 测试通过颜色设置
+	void		SetColorRunning(int addr);// 正常工作颜色设置
+	void		SetColorError(int addr);// 出错颜色设置
+	void		SetStatusText(int addr, CString str);// 状态文字设置
+	void		SetDataText(int addr, CString str);// 显示数据更改
 
 	// 采集性能监测
 	long		m_i;// 记录接收数据组数
@@ -170,8 +171,8 @@ public:
 	int			m_iNoEnd;
 
 	// 串口号与分组号对应关系
-	int			PartToCOM(int No);// 返回串口号
-	int			ComToPart(int port);// 返回工位号
+	int			NoToCOM(int No);// 返回串口号
+	int			ComToNo(int port);// 返回工位号
 
 	// 图像显示行列数
 	int			m_iRowNumber;// 行数

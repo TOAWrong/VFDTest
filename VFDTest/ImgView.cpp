@@ -30,8 +30,8 @@ ImgView::ImgView(LPCRECT prc, int ID ) : HCtrl(prc)
 
 	//中间显示数值
 	int yy = ( m_rcClient.bottom - prc->top ) / 2 - 10;
-	int xx = prc->right - prc->left;
-	m_pText = new HLabel( CRect( 0, yy, xx , 20));
+	int xx = prc->right - prc->left - 10;
+	m_pText = new HLabel( CRect( 5, yy, xx , 20));
 	m_pText->setAlign( DT_CENTER );
 	m_pText->setText( _T("_._ _") );
 	m_pText->setFont(30,0,_T("幼圆"));
@@ -118,7 +118,7 @@ void ImgView::layerout()
 
 	if ( m_pText )
 	{
-		m_pText->setRect( CRect( 0, yy / 2 - 15, xx, yy ), false);
+		m_pText->setRect( CRect( 2, yy / 2 - 15, xx-2, yy-2 ), false);
 	}
 	HCtrl::layerout();	
 }

@@ -185,7 +185,10 @@ void MainForm::OnOptions()
 		return;
 	}
 
-	KillTimer((UINT_PTR)this);
+	for (int i = 0; i < m_iParts; i++)
+	{
+		KillTimer(m_iCom[i]);
+	}
 
 	LogDisp( _T("*******************************") );
 	LogDisp( _T("参数设置成功") );
@@ -445,7 +448,7 @@ BOOL MainForm::IniConfig()
 		m_bStartWork[i] = FALSE;
 		m_bRunning[i] = FALSE;
 		m_bPass[i] = FALSE;
-		m_bTestEnd[i] = FALSE;
+		m_bTestEnding[i] = FALSE;
 		m_iTestEnd[i] = 0;
 		m_offtimes[i] = 0;// 断线次数
 	}
@@ -529,7 +532,7 @@ BOOL MainForm::SetTimerEvent(int port)
 {
 	
 	KillTimer(port);
-	int iNo = ComToPart(port); // 计算当下工位号
+	int iNo = ComToNo(port); // 计算当下工位号
 	CString str;
 	if(m_bStartWork[iNo])
 	{
@@ -538,9 +541,9 @@ BOOL MainForm::SetTimerEvent(int port)
 			m_offtimes[iNo]++;
 			//m_bRunning[iNo] = FALSE;
 			m_l++;
-			OnStatusDisconnect(iNo);
-			str.Format(_T("工位%i离线%i次"),iNo,m_offtimes[iNo]);
-			LogDisp(str);
+			//OnStatusDisconnect(iNo);
+			//str.Format(_T("工位%i离线%i次"),iNo,m_offtimes[iNo]);
+			//LogDisp(str);
 		}
 		else// 接收到返回数据
 		{
@@ -554,11 +557,9 @@ BOOL MainForm::SetTimerEvent(int port)
 		{
 			::PostThreadMessage( m_pCtrlThread.m_Thread->m_nThreadID, WM_THREAD_MSG, 1, iNo );
 			LogDisp( _T("工位离线，测试不合格") );
-			m_pPanlImg->m_iv[iNo]->m_pText->setText( _T("_._ _") );
-			m_pPanlImg->m_iv[iNo]->m_pPrompt->setText( _T("断开连接") );
-			m_pPanlImg->m_iv[iNo]->m_pText->setTextColor( 0x0000ff );
-			m_pPanlImg->m_iv[iNo]->m_pPrompt->setTextColor( 0x0000ff );
-//			m_pPanlImg->m_iv[iNo]->setBackColor( 0x5555ff );
+			SetDataText(iNo, _T("_._ _") );
+			SetStatusText(iNo, _T("Disconnected") );
+			SetColorError(iNo);
 			m_bStartWork[iNo] = FALSE;// 工位3次未返回数据，清除开始运行标志
 			m_offtimes[iNo] = 0;// 重置离线次数
 			str.Format(_T("工位%i离线3次断开"),iNo);
@@ -569,13 +570,22 @@ BOOL MainForm::SetTimerEvent(int port)
 	// 当递增次数达到每组工位数上限时，则地址位不变；
 	int addrTemp = m_addr[port]++;
 	m_addr[port] = ( m_addr[port] - 1 ) % m_iPartNumbers + 1;
-	while( ( !m_bStartWork[m_addr[port]] || m_bTestEnd[m_addr[port]] ) && m_addr[port] != addrTemp )
+	iNo = ComToNo(port);
+
+	while( ( !m_bStartWork[iNo] || m_bTestEnding[iNo] ) && m_addr[port] != addrTemp )
 	{
 		m_addr[port]++;
 		m_addr[port] = ( m_addr[port] - 1 ) % m_iPartNumbers + 1;
+		iNo = ComToNo(port);
 	}
 
-	iNo = ComToPart(port);
+	// 如果所有工位都不处于测试结束阶段，则继续查询继电器状态----2016/04/21
+	BOOL bTestEnd = FALSE;
+	for (int i = m_iNoBegin; i < m_iNoEnd; i++)
+	{
+		bTestEnd |= m_bTestEnding[i];// ？？？？？这个标志位该放在哪边重置，控制指令不一定能返回正确数据
+	}
+	m_pCtrlThread.m_bFun = !bTestEnd ? TRUE : FALSE;
 
 	// 如果没有工位处于工作状态，则关闭定时器
 	BOOL bStartWork = FALSE;
@@ -596,16 +606,15 @@ BOOL MainForm::SetTimerEvent(int port)
 		for (int i = m_iNoBegin; i <= m_iNoEnd; i++)
 		{
 			m_iTestEnd[i] = 0;// 工位启动延迟计数清零
-			m_bTestEnd[i] = FALSE;
+			m_bTestEnding[i] = FALSE;
+			m_bStartWork[i] = FALSE;
 		}
-		//if(m_bIsWriteThread)// 退出写线程
-		//{
-		//	::PostThreadMessage( m_Thread->m_nThreadID, WM_THREAD_STOP, 0, 0 );
-		//}
+		m_pCtrlThread.m_bFun = TRUE;
 		return FALSE;
 	}
-	
-	::PostThreadMessage( m_pMeterThread[port].m_Thread->m_nThreadID, WM_THREAD_MSG, 0, m_addr[port] ); // 查询指令，查询端口为port,仪表地址为m_addr[port]
+
+	if(!m_bTestEnding[iNo])
+		::PostThreadMessage( m_pMeterThread[port].m_Thread->m_nThreadID, WM_THREAD_MSG, 0, m_addr[port] ); // 查询指令，查询端口为port,仪表地址为m_addr[port]
 
 //	str.Format(_T("发送%i"),m_addr[port]);
 //	LogDisp(str);
@@ -699,6 +708,7 @@ LONG MainForm::OnCommunication(WPARAM ch, LPARAM port)
 					int iNo = m_iNoBegin + iPartNo * m_iPartNumbers;
 					int iNoTemp = methord::Hex2Dec(m_strReceiveData[port].Mid(6, 2));
 					m_bStartWork[iNo + iNoTemp] = FALSE;
+					m_bTestEnding[iNo + iNoTemp] = FALSE;
 					/*CString str;
 					str.Format(_T("%d,%d,%d\r\n"),iNo, iNoTemp, iNo + iNoTemp);
 					LogDisp(str);*/
@@ -726,7 +736,7 @@ LONG MainForm::OnCommunication(WPARAM ch, LPARAM port)
 		if ( m_strReceiveData[port].GetLength() == DATA_LENGTH_COMMUNICATION )// 返回数据一个26个字
 		{
 			//TRACE(m_strReceiveData[port]);
-			int iNo = ComToPart(port);// 计算工位编号;
+			int iNo = ComToNo(port);// 计算工位编号;
 			if (DATA_LENGTH_COMMUNICATION == 26)
 			{
 				CString strRecMidData = m_strReceiveData[port].Mid(0, 22);
@@ -775,10 +785,10 @@ LONG MainForm::OnCommunication(WPARAM ch, LPARAM port)
 			}
 			m_strproductID = ArrayID[iNo];// 变频板编号 = 编号数组[仪表编号]
 
-			if(m_bStartWork[iNo])
+			if( m_bStartWork[iNo] && !m_bTestEnding[iNo] )
 			{
 				m_communicationSign[port]=TRUE;
-				if (m_curVal[iNo] >= 0.4)//电流大于0.3A表明已启动成功
+				if (m_curVal[iNo] >= 0.4)//电流大于0.4A表明已启动成功
 				{
 					if (!m_bRunning[iNo])// 记录启动时间
 					{
@@ -804,32 +814,26 @@ LONG MainForm::OnCommunication(WPARAM ch, LPARAM port)
 							TRACE("Can't open file %s,error=%u\n",_T("test.txt"),fileException.m_cause);
 						}
 					}
-					m_bRunning[iNo] = TRUE;// 电流大于0.1，工位已正常启动
-					OnStatusRunning(iNo);// 更新工位状态
-					if ( m_curVal[iNo] > 0.6 )// 电流大于0.6A，电流过大，软件指示电流过高
-					{
-						m_pPanlImg->m_iv[iNo]->m_pPrompt->setText( _T("High") );
-						m_pPanlImg->m_iv[iNo]->m_pText->setTextColor( 0x0000ff );// 暗红色
-						m_pPanlImg->m_iv[iNo]->m_pPrompt->setTextColor(0x0000ff);
-					}
-					else if ( m_curVal[iNo] < 0.4 )// 电流小于0.4A，电流过小，软件指示电流过低
-					{
-						m_pPanlImg->m_iv[iNo]->m_pPrompt->setText( _T("Low") );
-						m_pPanlImg->m_iv[iNo]->m_pText->setTextColor( 0xff0000 );// 深蓝色
-						m_pPanlImg->m_iv[iNo]->m_pPrompt->setTextColor( 0xff0000 );
-					}
+					m_bRunning[iNo] = TRUE;// 电流大于0.4，工位已正常启动
+					SetColorRunning(iNo);// 更新工位状态
 				}
-				else if( !m_bTestEnd[iNo] && m_curVal[iNo] < 0.1 )
+				else if( !m_bTestEnding[iNo] )
 				{
-					m_bRunning[iNo] = FALSE;// 电流不大于0.1，工位尚未启动
 					CTime systemp = CTime::GetCurrentTime(); 
 					CTimeSpan ts = systemp - m_startTime[iNo];// 计算已运行时间
-					m_pPanlImg->m_iv[iNo]->m_pPrompt->setText(_T("starting"));
-					if( ts.GetTotalSeconds() > 12 )// 如果已运行超过12秒，且电流值仍小于0.1，则工位启动失败
+					SetStatusText( iNo, _T("starting") );
+					if( ts.GetTotalSeconds() > 12 && m_curVal[iNo] < 0.05 )// 如果已运行超过12秒，且电流值仍小于0.05，则工位启动失败
 					{
-						//m_bStartWork[iNo] = FALSE;
-						m_pPanlImg->m_iv[iNo]->m_pPrompt->setText(_T("SHUT DOWN"));
-						m_pPanlImg->m_iv[iNo]->m_pPrompt->setTextColor( 0x0000ff );
+						if ( m_bRunning[iNo] == TRUE )
+						{
+							SetStatusText( iNo, _T("Shut Down") );
+							m_bRunning[iNo] = FALSE;
+						}
+						else
+						{
+							SetStatusText( iNo, _T("Start Failed") );
+						}
+						SetColorError(iNo);
 						::PostThreadMessage( m_pCtrlThread.m_Thread->m_nThreadID, WM_THREAD_MSG, 1, iNo );
 
 						CString strEnd;
@@ -852,6 +856,21 @@ LONG MainForm::OnCommunication(WPARAM ch, LPARAM port)
 						{
 							TRACE("Can't open file %s,error=%u\n",_T("test.txt"),fileException.m_cause);
 						}
+					}
+				}
+				if ( m_bRunning[iNo] )
+				{
+					if (m_curVal[iNo] > 0.6)// 电流大于0.6A，电流过大，软件指示电流过高
+					{
+						SetStatusText( iNo, _T("High") );
+						m_pPanlImg->m_iv[iNo]->m_pText->setTextColor(0x0000ff);// 红色
+						m_pPanlImg->m_iv[iNo]->m_pPrompt->setTextColor(0x0000ff);
+					}
+					else if (m_curVal[iNo] < 0.4)// 电流小于0.4A，电流过小，软件指示电流过低
+					{
+						SetStatusText( iNo, _T("Low") );
+						m_pPanlImg->m_iv[iNo]->m_pText->setTextColor(0xff0000);// 蓝色
+						m_pPanlImg->m_iv[iNo]->m_pPrompt->setTextColor(0xff0000);
 					}
 				}
 				OnDisp(iNo,port);// 实时显示数据
@@ -886,7 +905,7 @@ void MainForm::CtrlStatus( int iStatus, int iAddr, BOOL bLow )
 	}
 	for (int i = 0; i < 8; i++)
 	{
-		if ( m_bTestEnd[iNo + i] )
+		if ( m_bTestEnding[iNo + i] )
 		{
 			if (m_iTestEnd[iNo + i] == 3)// 结束阶段处理超过1个回合，则可以判断结束处理完成，以防误判造成不正确显示结果
 			{
@@ -913,17 +932,17 @@ void MainForm::CtrlStatus( int iStatus, int iAddr, BOOL bLow )
 				{
 					BeginToRun(iNo + i);// 启动对应工位，iNo + i为工位号
 				}
-				m_bTestEnd[iNo + i] = FALSE;
+				m_bTestEnding[iNo + i] = FALSE;
 			}
 		}
 		else
 		{
-			if ( m_bStartWork[iNo + i] && !m_bTestEnd[iNo + i] )
+			if ( m_bStartWork[iNo + i] && !m_bTestEnding[iNo + i] )
 			{
 				//m_bStartWork[iNo + i] = FALSE;// 继电器状态为0，对应工位断开，标志置为0
 				::PostThreadMessageA( m_pCtrlThread.m_Thread->m_nThreadID, WM_THREAD_MSG, 1, iNo+i);// 不合格指示
-				m_pPanlImg->m_iv[iNo + i]->m_pPrompt->setText( _T("Closed") );
-				m_pPanlImg->m_iv[iNo + i]->m_pPrompt->setTextColor( 0x0000ff );
+				SetStatusText(iNo + i, _T("Closed") );
+				SetColorError(iNo + i);
 				CString strStatus;
 				strStatus.Format( _T("工位%d关闭，测试中断"), iNo + i );
 				LogDisp( strStatus );
@@ -968,7 +987,8 @@ void MainForm::SaveData(float vol,float cur,float tpq,float fre,float taw,float 
 	}
 }
 /*
-数据存储,写入TXT文档
+功能：数据存储,写入TXT文档
+参数：vol--电压，cur--电流，addr--工位号
 */
 void MainForm::SaveData( float vol, float cur, int addr)
 {
@@ -1005,13 +1025,13 @@ void MainForm::SaveData( float vol, float cur, int addr)
 
 }
 /*
-功能说明：开始运行按钮，执行设定定时器指令
-参数说明：addr为对应工位号
+功能：开始运行按钮，执行设定定时器指令
+参数：addr为对应工位号
 */
 void MainForm::BeginToRun(int No)
 {
 	
-	int port = PartToCOM(No);// 串口号
+	int port = NoToCOM(No);// 串口号
 	m_addr[port] = (No % m_iPartNumbers) == 0 ? m_iPartNumbers : No % m_iPartNumbers;
 	if(m_bOpenPort[port])
 	{
@@ -1077,7 +1097,7 @@ void MainForm::OpenComm( int m_nCom )
 	{	
 		if ( m_nCom == m_iCtrlCom )
 		{
-			m_nBaud = 38400;
+			//m_nBaud = 38400;
 			if (m_pCtrlThread.m_Port.InitPort(this->m_hWnd, m_nCom, m_nBaud,m_cParity,m_nDatabits,m_nStopbits,m_dwCommEvents,512))
 			{
 				m_pCtrlThread.m_Port.StartMonitoring();// 启动串口监视线程
@@ -1141,47 +1161,48 @@ void MainForm::CloseComm()
 	LogDisp(str);
 }
 
-void MainForm::OnDisp(int iMeter,int m_nCom)
+void MainForm::OnDisp(int iNo,int m_nCom)
 {
 	CTime systemp = CTime::GetCurrentTime(); 
-	CTimeSpan ts = systemp - m_startTime[iMeter];// 计算已运行时间
+	CTimeSpan ts = systemp - m_startTime[iNo];// 计算已运行时间
 	m_sysTime.Format( _T("%02d:%02d:%02d"),ts.GetHours(),ts.GetMinutes(),ts.GetSeconds()); 
 
-	m_strcNo.Format(_T("%i"),iMeter);
-	m_strvolVal.Format(_T("%0.1f"),m_volVal[iMeter]);
-	m_strcurVal.Format(_T("%0.3f"),m_curVal[iMeter]);
+	m_strcNo.Format(_T("%i"),iNo);
+	m_strvolVal.Format(_T("%0.1f"),m_volVal[iNo]);
+	m_strcurVal.Format(_T("%0.3f"),m_curVal[iNo]);
 	if (DATA_LENGTH_COMMUNICATION == 66)
 	{
-		m_strfreVal.Format(_T("%0.2f"), m_freVal[iMeter]);
-		m_strtrwVal.Format(_T("%0.4f"), m_trwVal[iMeter]);
-		m_strtawVal.Format(_T("%0.4f"), m_tawVal[iMeter]);
-		m_strtpqVal.Format(_T("%0.4f"), m_tpqVal[iMeter]);
+		m_strfreVal.Format(_T("%0.2f"), m_freVal[iNo]);
+		m_strtrwVal.Format(_T("%0.4f"), m_trwVal[iNo]);
+		m_strtawVal.Format(_T("%0.4f"), m_tawVal[iNo]);
+		m_strtpqVal.Format(_T("%0.4f"), m_tpqVal[iNo]);
 	}
 	
 	CString str;
 	str.Format(_T( "电流%s已运行%s" ),m_strcurVal,m_sysTime);
 	str.Format(_T("电压:%s 功率:%s\n电流:%s 功因:%s"), m_strvolVal, m_strtawVal, m_strcurVal, m_strtpqVal);
-	m_pPanlImg->m_iv[iMeter]->m_pText->setText( m_strcurVal );
-	m_pPanlImg->m_iv[iMeter]->m_pTime->setText( m_sysTime );
-	
-//	LogDisp(str);
+	SetDataText( iNo, m_strcurVal );
+	m_pPanlImg->m_iv[iNo]->m_pTime->setText( m_sysTime );
 
-	if ( ts.GetTotalMinutes() >= m_iTotalTime && !m_bTestEnd[iMeter])// 测试时间到，执行相应的合格操作
+	// 测试时间到，执行相应的操作
+	if ( ts.GetTotalMinutes() >= m_iTotalTime && !m_bTestEnding[iNo])
 	{
-		//m_bStartWork[iMeter] = FALSE;
-		::PostThreadMessage( m_pCtrlThread.m_Thread->m_nThreadID, WM_THREAD_MSG, 2, iMeter );
+		::PostThreadMessage( m_pCtrlThread.m_Thread->m_nThreadID, WM_THREAD_MSG, 2, iNo );
 
-		m_bTestEnd[iMeter] = TRUE;
+		m_bTestEnding[iNo] = TRUE;
 
-		m_pPanlImg->m_iv[iMeter]->m_pPrompt->setText( _T( "PASS" ) );
-		OnStatus(iMeter);
-		str.Format( _T("工位%i测试时间到"), iMeter );
+		m_pCtrlThread.m_bFun = FALSE;
+
+		SetStatusText( iNo, _T( "PASS" ) );
+		SetColorPass(iNo);
+		str.Format( _T("工位%i测试时间到，测试合格"), iNo );
 		LogDisp( str );
 		//m_bStartWork[iMeter] = FALSE;
-		m_bRunning[iMeter] = FALSE;
+		m_bRunning[iNo] = FALSE;
+
 		CString strEnd;
 		CString str;
-		str = TimeToStr(iMeter);
+		str = TimeToStr(iNo);
 		strEnd.Format(_T("%s，运行时间：%i分，测试合格\r\n"), str, ts.GetTotalMinutes());
 		CStdioFile SFile;
 		CFileException fileException;
@@ -1206,41 +1227,54 @@ void MainForm::TestPassed(int iMeter, CTimeSpan ts)
 /*
 开始新一轮测试
 */
-void MainForm::StartNewTest( int iMeter )
+void MainForm::StartNewTest( int iNo )
 {
-	m_pPanlImg->m_iv[iMeter]->m_pText->setTextColor( 0x000000 );
-	m_pPanlImg->m_iv[iMeter]->m_pPrompt->setTextColor( 0x000000 );
-	
+	m_pPanlImg->m_iv[iNo]->m_pText->setTextColor( 0x000000 );
+	m_pPanlImg->m_iv[iNo]->m_pPrompt->setTextColor( 0x000000 );
+	m_pPanlImg->m_iv[iNo]->m_pText->setBackColor( 0xffffff );
+
 	if ( m_iStartMethod == 1 )// 扫描启动，执行全关-蓝开
 	{
-		::PostThreadMessage( m_pCtrlThread.m_Thread->m_nThreadID, WM_THREAD_MSG, 3, iMeter );
+		::PostThreadMessage( m_pCtrlThread.m_Thread->m_nThreadID, WM_THREAD_MSG, 3, iNo );
 	}
 	else // 按钮启动，执行红关-绿关
 	{
-		::PostThreadMessage( m_pCtrlThread.m_Thread->m_nThreadID, WM_THREAD_MSG, 4, iMeter );
+		::PostThreadMessage( m_pCtrlThread.m_Thread->m_nThreadID, WM_THREAD_MSG, 4, iNo );
 	}
 }
 /*
-功能描述：显示对应的工位状态
-参数说明：addr为工位编号
+功能：显示对应的工位状态
+参数：addr为工位编号
 */
-void MainForm::OnStatus( int addr )
+void MainForm::SetColorPass( int iNo )
 {
-	m_pPanlImg->m_iv[addr]->m_pText->setTextColor( 0x00ff00 );// 中间电流设为绿色
+	m_pPanlImg->m_iv[iNo]->m_pText->setTextColor( 0xffffff );// 中间电流设为白色
+	m_pPanlImg->m_iv[iNo]->m_pPrompt->setTextColor( 0x00ff00 );// 左上提示设为绿色
+	m_pPanlImg->m_iv[iNo]->m_pText->setBackColor( 0x00ff00 );// 中间背景设为绿色
 //	Invalidate(TRUE);
 }
-void MainForm::OnStatusRunning( int addr )// 正常运行状态指示
+void MainForm::SetColorRunning( int addr )// 正常运行状态指示
 {
 	m_pPanlImg->m_iv[addr]->m_pText->setTextColor( 0x00ff00 );// 中间电流设为绿色
 	m_pPanlImg->m_iv[addr]->m_pPrompt->setText( _T("Running") );
-	m_pPanlImg->m_iv[addr]->m_pPrompt->setTextColor( 0x00ff00 );// 左上提示设为黑色
+	m_pPanlImg->m_iv[addr]->m_pPrompt->setTextColor( 0x000000 );// 左上提示设为黑色
 //	Invalidate(TRUE);
 }
-void MainForm::OnStatusDisconnect( int addr )
+void MainForm::SetColorError( int addr )
 {
-	m_pPanlImg->m_iv[addr]->m_pText->setTextColor( 0x0000ff );// 中间电流设为红色
-	m_pPanlImg->m_iv[addr]->m_pPrompt->setText( _T("Disconnected") );
+	m_pPanlImg->m_iv[addr]->m_pText->setTextColor( 0xffffff );// 中间电流设为白色
+	m_pPanlImg->m_iv[addr]->m_pText->setBackColor(0x0000ff);// 中间背景设为红色
+	m_pPanlImg->m_iv[addr]->m_pPrompt->setTextColor(0x0000ff);
 	Invalidate(TRUE);
+}
+
+void MainForm::SetStatusText(int iNo, CString str)
+{
+	m_pPanlImg->m_iv[iNo]->m_pPrompt->setText(str);
+}
+void MainForm::SetDataText(int iNo, CString str)
+{
+	m_pPanlImg->m_iv[iNo]->m_pText->setText(str);
 }
 /*
 保存数据线程，定时保存数据
@@ -1273,6 +1307,7 @@ UINT MainForm::WriteThread(LPVOID pParam)
 	}
 	return 0;
 }
+
 void MainForm::WriteData()
 {
 //	int iNos = m_iParts * m_iPartNumbers;
@@ -1296,7 +1331,8 @@ void MainForm::WriteData()
 }
 
 /*
-扫描处理
+功能：扫描消息处理
+时间：2015/09/20
 */
 void MainForm::ScanMsg()
 {
@@ -1355,11 +1391,13 @@ void MainForm::ScanMsg()
 }
 
 /*
-扫描完成，启动对应工位
+功能：扫描完成，启动对应工位
+参数：iNo为工位号
+时间：2016/04/21
 */
 void MainForm::ScanToStart( int iNo )
 {
-	int port = PartToCOM( iNo );// 工位对应串口号
+	int port = NoToCOM( iNo );// 工位对应串口号
 	int addr = iNo % m_iPartNumbers;// 仪表地址
 	if (addr == 0)
 	{
@@ -1382,7 +1420,7 @@ void MainForm::ScanToStart( int iNo )
 }
 
 /*
-消息预处理  此处用来捕捉扫描枪消息
+功能：消息预处理  此处用来捕捉扫描枪消息
 */
 BOOL MainForm::PreTranslateMessage( MSG* pMsg )
 {
@@ -1412,10 +1450,10 @@ BOOL MainForm::PreTranslateMessage( MSG* pMsg )
 }
 
 /*
-由工位号 计算出其对应的串口号
-参数说明：No为工位号
+功能：由工位号 计算出其对应的串口号
+参数：No为工位号
 */
-int MainForm::PartToCOM( int No )
+int MainForm::NoToCOM( int No )
 {
 	int Port, tempPart;
 	tempPart = ( No - 1 ) / m_iPartNumbers + 1;
@@ -1435,10 +1473,10 @@ int MainForm::PartToCOM( int No )
 	}
 }
 /*
-由串口号 计算出其对应的工位号
-参数说明：port为串口号
+功能：由串口号 计算出其对应的工位号
+参数：port为串口号
 */
-int MainForm::ComToPart( int port )
+int MainForm::ComToNo( int port )
 {
 	int No, tempPart;
 	for ( int i = 0; i < m_iParts; i++ )
@@ -1454,7 +1492,8 @@ int MainForm::ComToPart( int port )
 }
 
 /*
-Log编辑框显示，并且实时保存到日志
+功能：Log编辑框显示，并且实时保存到日志
+参数：str为要显示的字符串
 */
 void MainForm::LogDisp( CString str )
 {
@@ -1513,6 +1552,10 @@ void MainForm::OnTimer(UINT_PTR nIDEvent)
 	HWnd::OnTimer(nIDEvent);
 }
 
+/*
+功能：文件保存标准格式，前三段分别为时间，产品号（仅限扫描模式），工位号
+参数：iNo为工位号
+*/
 CString MainForm::TimeToStr(int iNo)
 {
 	CString strID;
