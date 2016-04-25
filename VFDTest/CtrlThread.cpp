@@ -51,9 +51,16 @@ void CCtrlThread::RunMsg()
 		Sleep(CTRL_DELAY);
 		m_Port.SendCtrlOrder( CTRL_ORDER_CLOSE, LED_RED, m_iNo );
 		Sleep(CTRL_DELAY);
+		break;// 2014/04/23之前都没有加break，重大bug，导致启动反应迟钝
 	case 5: // 查询工位状态
 		m_Port.SendCtrlOrder( 1 );// 查询继电器状态
 		Sleep( 200 );
+		break;
+	case 6:
+		m_Port.SendCtrlOrder(CTRL_ORDER_CLOSE, LED_BLUE, m_iNo);
+		Sleep(CTRL_DELAY);
+		m_Port.SendCtrlOrder(CTRL_ORDER_OPEN, LED_GREEN, m_iNo);
+		Sleep(CTRL_DELAY);
 		break;
 	default:
 		break;
@@ -66,7 +73,7 @@ void CCtrlThread::Fun()
 	//if(	m_bFun )
 	{
 		m_Port.SendCtrlOrder( 1 );
-		Sleep( 200 );
+		Sleep( CTRL_DELAY );
 	}
 }
 
