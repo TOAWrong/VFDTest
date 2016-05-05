@@ -176,11 +176,13 @@ void MainForm::OnOptions()
 	op.m_iStartMethod = m_iStartMethod;
 	
 	m_pCtrlThread.m_bFun = FALSE;
+	m_pCtrlThread.End();
 	CloseComm();
 	
 	if( op.DoModal() != IDOK )
 	{
 		OpenComm();
+		m_pCtrlThread.Start();
 		m_pCtrlThread.m_bFun = TRUE;
 		return;
 	}
