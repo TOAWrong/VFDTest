@@ -34,7 +34,7 @@ ImgView::ImgView(LPCRECT prc, int ID ) : HCtrl(prc)
 	m_pText = new HLabel( CRect( 5, yy, xx , 20));
 	m_pText->setAlign( DT_CENTER );
 	m_pText->setText( _T("_._ _") );
-	m_pText->setFont(30,0,_T("свт╡"));
+	m_pText->setFont(60,0,_T("TIMES NEW ROMAN"));
 	m_pText->setTextColor( 0x000000 );
 	addCtrl( m_pText );
 

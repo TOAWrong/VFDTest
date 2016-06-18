@@ -558,14 +558,15 @@ BOOL MainForm::SetTimerEvent(int port)
 		if ( m_offtimes[iNo] == 3 )// 设置断线容许断线次数，以及断线之后的事件处理
 		{
 			::PostThreadMessage( m_pCtrlThread.m_Thread->m_nThreadID, WM_THREAD_MSG, 1, iNo );
-			LogDisp( _T("工位离线，测试不合格") );
+			str.Format( _T("工位%02d离线3次，测试不合格"), iNo );
+			LogDisp( str );
 			SetDataText(iNo, _T("_._ _") );
 			SetStatusText(iNo, _T("Disconnected") );
 			SetColorError(iNo);
 			m_bStartWork[iNo] = FALSE;// 工位3次未返回数据，清除开始运行标志
 			m_offtimes[iNo] = 0;// 重置离线次数
-			str.Format(_T("工位%i离线3次断开"),iNo);
-			LogDisp(str);
+			//str.Format(_T("工位%02d离线3次断开"),iNo);
+			//LogDisp(str);
 		}
 		/*if (m_bTestEnding[iNo])
 		{
@@ -592,7 +593,7 @@ BOOL MainForm::SetTimerEvent(int port)
 	{
 		bTestEnd |= m_bTestEnding[i];// ？？？？？这个标志位该放在哪边重置，控制指令不一定能返回正确数据
 	}
-	m_pCtrlThread.m_bFun = !bTestEnd ? TRUE : FALSE;// 必不可少
+	m_pCtrlThread.m_bFun = !bTestEnd ? TRUE : FALSE;// ****必不可少****
 
 	// 如果没有工位处于工作状态，则关闭定时器
 	BOOL bStartWork = FALSE;
@@ -1248,13 +1249,13 @@ void MainForm::StartNewTest( int iNo )
 void MainForm::SetColorPass( int iNo )
 {
 	m_pPanlImg->m_iv[iNo]->m_pText->setTextColor( 0xffffff );// 中间电流设为白色
-	m_pPanlImg->m_iv[iNo]->m_pPrompt->setTextColor( 0x00ff00 );// 左上提示设为绿色
+	m_pPanlImg->m_iv[iNo]->m_pPrompt->setTextColor( 0x008800 );// 左上提示设为墨绿色
 	m_pPanlImg->m_iv[iNo]->m_pText->setBackColor( 0x00ff00 );// 中间背景设为绿色
 //	Invalidate(TRUE);
 }
 void MainForm::SetColorRunning( int addr )// 正常运行状态指示
 {
-	m_pPanlImg->m_iv[addr]->m_pText->setTextColor( 0x00ff00 );// 中间电流设为绿色
+	m_pPanlImg->m_iv[addr]->m_pText->setTextColor( 0x008800 );// 中间电流设为墨绿色
 	m_pPanlImg->m_iv[addr]->m_pPrompt->setText( _T("Running") );
 	m_pPanlImg->m_iv[addr]->m_pPrompt->setTextColor( 0x000000 );// 左上提示设为黑色
 //	Invalidate(TRUE);
